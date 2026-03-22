@@ -1,9 +1,8 @@
-import { Home, Compass, Bell, User } from 'lucide-react';
+import { Home, Bell, User } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const tabs = [
   { path: '/feed', icon: Home, label: 'Home' },
-  { path: '/dashboard', icon: Compass, label: 'Network' },
   { path: '/notifications', icon: Bell, label: 'Alerts' },
   { path: '/profile', icon: User, label: 'You' },
 ];

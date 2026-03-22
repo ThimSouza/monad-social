@@ -8,7 +8,6 @@ import { WalletProvider } from "@/contexts/WalletContext";
 import { FeedProvider } from "@/contexts/FeedContext";
 import Index from "./pages/Index";
 import Feed from "./pages/Feed";
-import Dashboard from "./pages/Dashboard";
 import Alerts from "./pages/Alerts";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -27,7 +26,6 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/feed" element={<Feed />} />
-                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/notifications" element={<Alerts />} />
                 <Route path="*" element={<NotFound />} />

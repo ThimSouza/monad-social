@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { getAddress } from 'ethers';
-import { Zap, MessageCircle, Repeat2, Heart, Eye, Plus, Wallet, Loader2, ImagePlus, X, Image, UserPlus, UserMinus } from 'lucide-react';
+import { MessageCircle, Repeat2, Heart, Eye, Plus, Wallet, Loader2, ImagePlus, X, Image, UserPlus, UserMinus } from 'lucide-react';
 import {
   useFeed,
   readPhotoAttachment,
@@ -45,6 +45,24 @@ function timeAgo(date: Date) {
 function formatCount(n: number) {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
   return n.toString();
+}
+
+/** Concentric rings — shockwave / ripple style (not ECG). */
+function ShockwavesMark({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden
+    >
+      <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+      <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.75" opacity={0.95} />
+      <circle cx="12" cy="12" r="8.25" stroke="currentColor" strokeWidth="1.6" opacity={0.72} />
+      <circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="1.4" opacity={0.48} />
+    </svg>
+  );
 }
 
 const Feed = () => {
@@ -92,17 +110,6 @@ const Feed = () => {
       [...new Set(posts.map(p => p.authorAddress?.toLowerCase()).filter(Boolean) as string[])].sort().join('|'),
     [posts]
   );
-  const [tps, setTps] = useState(9923);
-  const [block, setBlock] = useState(1847293);
-
-  useEffect(() => {
-    const i = setInterval(() => {
-      setTps(p => p + Math.floor(Math.random() * 150 - 60));
-      setBlock(p => p + 1);
-    }, 3000);
-    return () => clearInterval(i);
-  }, []);
-
   useEffect(() => {
     if (!connectionError) return;
     toast.error('Could not connect wallet', { description: connectionError, duration: 6000 });
@@ -420,11 +427,11 @@ const Feed = () => {
         <div className="mx-auto flex max-w-lg items-center justify-between gap-4 px-5 py-4">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-border/50 bg-card/80 shadow-soft">
-              <Zap className="h-5 w-5 text-accent" strokeWidth={2} />
+              <ShockwavesMark className="h-5 w-5 text-accent drop-shadow-[0_0_10px_hsl(188_72%_48%_/0.4)]" />
             </div>
             <div className="flex min-w-0 flex-col">
               <span className="wordmark text-[11px]">Feed</span>
-              <span className="truncate text-scale-sm font-semibold text-foreground">Monad Pulse</span>
+              <span className="truncate text-scale-sm font-semibold text-foreground">Pulse</span>
             </div>
           </div>
           {isConnected ? (
@@ -441,15 +448,6 @@ const Feed = () => {
               Sign in
             </button>
           )}
-        </div>
-
-        <div className="flex items-center justify-center gap-6 border-t border-border/40 bg-card/30 px-5 py-3 text-xs">
-          <span className="flex items-center gap-2 font-medium text-accent">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-accent shadow-[0_0_8px_hsl(var(--accent)/0.6)]" />
-            {tps.toLocaleString()} TPS
-          </span>
-          <span className="text-muted-foreground">0.8s latency</span>
-          <span className="tabular-nums text-muted-foreground">#{block.toLocaleString()}</span>
         </div>
 
         {isConnected && !isMonadTestnet ? (

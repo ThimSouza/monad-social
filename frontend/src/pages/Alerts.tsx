@@ -37,7 +37,7 @@ const MOCK_ALERTS: AlertItem[] = [
     id: '2',
     kind: 'like',
     title: 'New likes on your pulse',
-    body: 'Kenji and 24 others liked your post about EIP-7702.',
+    body: 'Kenji and 24 others liked your post on Pulse.',
     time: '1 h',
     read: false,
   },

@@ -1,5 +1,3 @@
-import type { BrowserProvider } from 'ethers';
-
 export const MONAD_TESTNET_CHAIN_ID = 10143;
 export const MONAD_TESTNET_HEX = '0x' + MONAD_TESTNET_CHAIN_ID.toString(16);
 
@@ -38,14 +36,4 @@ export async function ensureMonadTestnet(ethereum: {
     }
     throw e;
   }
-}
-
-export async function readDelegatedImplementation(
-  provider: BrowserProvider,
-  eoa: string
-): Promise<string | null> {
-  const code = await provider.getCode(eoa);
-  if (!code || code === '0x') return null;
-  if (!code.startsWith('0xef0100')) return null;
-  return ('0x' + code.slice(8)).toLowerCase();
 }

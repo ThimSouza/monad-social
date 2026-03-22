@@ -63,6 +63,7 @@ In Hasura → **Data**, explore entities: `Post`, `Like`, `Comment`, `Follow`, `
 |------|----------------|
 | **Hasura console** (browse tables, run GraphiQL) | [http://localhost:8080/console](http://localhost:8080/console) |
 | **GraphQL API** (for apps / Altair / curl) | `http://localhost:8080/v1/graphql` |
+| **Frontend (`../frontend`)** | With `npm run dev` on port **5173**, requests go to `/hasura/v1/graphql` (Vite proxy → this URL). Set `VITE_HASURA_GRAPHQL_URL` if you use another port or deploy remotely. |
 | **Envio dev console** (project / sync status) | [https://envio.dev/console](https://envio.dev/console) |
 
 1. Open **Hasura console** → sign in with admin secret **`testing`** (unless you changed it in Envio/Docker env).

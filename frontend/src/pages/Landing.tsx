@@ -1,8 +1,8 @@
-import { Zap, Wallet, Shield, Activity, Blocks, Cpu } from 'lucide-react';
+import { Zap, Wallet } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useWallet } from '@/contexts/WalletContext';
 import { useEffect } from 'react';
-
+import { toast } from 'sonner';
 /** Abstract network / chain motif (decorative). */
 function BlockchainNetworkArt() {
   return (
@@ -69,22 +69,21 @@ function BlockchainNetworkArt() {
   );
 }
 
-const stats = [
-  { value: '10,000+', label: 'TPS', icon: Activity },
-  { value: '~1s', label: 'Finality', icon: Shield },
-  { value: 'µMON', label: 'Gas', icon: Zap },
-];
-
 const BG_IMAGE =
   'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1920&q=85';
 
 const Landing = () => {
-  const { connect, isConnected, isConnecting } = useWallet();
+  const { connect, isConnected, isConnecting, connectionError, clearConnectionError } = useWallet();
   const navigate = useNavigate();
-
   useEffect(() => {
     if (isConnected) navigate('/feed');
   }, [isConnected, navigate]);
+
+  useEffect(() => {
+    if (!connectionError) return;
+    toast.error('Could not connect wallet', { description: connectionError, duration: 6000 });
+    clearConnectionError();
+  }, [connectionError, clearConnectionError]);
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden bg-background">
@@ -124,18 +123,6 @@ const Landing = () => {
 
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 py-12 sm:py-16">
         <div className="flex w-full max-w-md flex-col items-stretch">
-          {/* Tech strip */}
-          <div className="mb-8 flex items-center justify-center gap-2">
-            <span className="flex items-center gap-1.5 rounded-full border border-border/60 bg-card/50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground backdrop-blur-md">
-              <Blocks className="h-3.5 w-3.5 text-primary" strokeWidth={2} aria-hidden />
-              L1 · Parallel EVM
-            </span>
-            <span className="flex items-center gap-1.5 rounded-full border border-border/60 bg-card/50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground backdrop-blur-md">
-              <Cpu className="h-3.5 w-3.5 text-accent" strokeWidth={2} aria-hidden />
-              Web3
-            </span>
-          </div>
-
           <div className="mb-10 flex flex-col items-center text-center">
             <div className="landing-float-soft mb-8 flex h-24 w-24 items-center justify-center rounded-3xl border border-white/[0.12] bg-gradient-to-br from-card/80 to-card/40 p-1 shadow-[0_0_0_1px_hsl(258_86%_64%_/0.2),0_24px_48px_-12px_hsl(0_0%_0%_/0.55)] backdrop-blur-2xl">
               <div className="flex h-full w-full items-center justify-center rounded-[1.35rem] gradient-brand shadow-fab ring-4 ring-primary/10">
@@ -143,13 +130,11 @@ const Landing = () => {
               </div>
             </div>
 
-            <p className="wordmark mb-3">Monad</p>
             <h1 className="heading-display">
               <span className="gradient-text-brand">Pulse</span>
             </h1>
             <p className="text-scale-base mt-6 max-w-sm text-pretty text-muted-foreground">
-              Social layer for high-throughput chains — parallel execution, wallet-native identity, and a feed that keeps up
-              with the network.
+              A social network that you control the privacy of your identity and activity.
             </p>
           </div>
 
@@ -165,34 +150,24 @@ const Landing = () => {
 
             <button
               type="button"
-              onClick={connect}
+              onClick={() => void connect()}
               disabled={isConnecting}
               className="landing-shimmer-btn relative flex min-h-12 w-full items-center justify-center gap-3 rounded-2xl gradient-brand px-6 py-3.5 text-base font-semibold text-primary-foreground shadow-fab transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_32px_-4px_hsl(258_86%_64%_/0.45)] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
             >
               <Wallet className="relative z-[1] h-5 w-5 shrink-0" strokeWidth={2} />
-              <span className="relative z-[1]">{isConnecting ? 'Connecting…' : 'Connect wallet'}</span>
+              <span className="relative z-[1]">
+                {isConnecting ? 'Connecting…' : 'Sign in with wallet'}
+              </span>
             </button>
             <p className="relative z-[1] mt-4 text-center text-xs leading-relaxed text-muted-foreground">
-              MetaMask, Rabby, and other browser wallets · Monad Testnet
+              MetaMask, Rabby, or any EIP-1193 wallet on <strong>Monad Testnet</strong> (chain 10143). Each on-chain
+              action opens your wallet to confirm a normal transaction.
             </p>
           </div>
 
-          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:gap-4">
-            {stats.map(({ value, label, icon: Icon }) => (
-              <div
-                key={label}
-                className="group surface-panel flex flex-1 flex-col items-center gap-2 border-white/[0.06] bg-card/35 px-4 py-5 text-center backdrop-blur-md transition-all duration-300 hover:border-primary/25 hover:bg-card/50 hover:shadow-[0_0_24px_-8px_hsl(188_72%_48%_/0.2)] touch-press-soft"
-              >
-                <Icon
-                  className="h-4 w-4 text-accent transition-colors group-hover:text-primary"
-                  strokeWidth={2}
-                  aria-hidden
-                />
-                <span className="text-scale-lg font-semibold tabular-nums text-foreground">{value}</span>
-                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
-              </div>
-            ))}
-          </div>
+          <p className="mt-10 text-center text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground/60">
+            Powered by Monad
+          </p>
         </div>
       </main>
     </div>

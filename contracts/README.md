@@ -23,6 +23,50 @@ forge script script/Deploy.s.sol:Deploy \
 
 Copy the three deployed addresses from the output.
 
+## Deploy Pulse7702Session (EIP-7702 implementation)
+
+Source of truth: **`src/Pulse7702Session.sol`**. The Vite app reads the deployed address as **`VITE_PULSE7702_IMPLEMENTATION`** in `frontend/.env`.
+
+```bash
+source .env
+forge script script/DeployPulse7702Session.s.sol:DeployPulse7702Session \
+  --rpc-url https://testnet-rpc.monad.xyz \
+  --broadcast \
+  -vvvv
+```
+
+**Deploy + verify (Sourcify) in one step:**
+
+```bash
+forge script script/DeployPulse7702Session.s.sol:DeployPulse7702Session \
+  --rpc-url https://testnet-rpc.monad.xyz \
+  --broadcast \
+  --verify \
+  --verifier sourcify \
+  --verifier-url 'https://sourcify-api-monad.blockvision.org/' \
+  -vvvv
+```
+
+**Verify only** (set `PULSE7702_SESSION_ADDRESS` in `.env`):
+
+```bash
+chmod +x script/verify_pulse7702_session.sh
+./script/verify_pulse7702_session.sh
+```
+
+Or manually:
+
+```bash
+forge verify-contract <PULSE7702_SESSION_ADDRESS> src/Pulse7702Session.sol:Pulse7702Session \
+  --rpc-url https://testnet-rpc.monad.xyz \
+  --chain 10143 \
+  --verifier sourcify \
+  --verifier-url 'https://sourcify-api-monad.blockvision.org/' \
+  --watch
+```
+
+Paste the printed address into **`frontend/.env`** as `VITE_PULSE7702_IMPLEMENTATION=0x...`.
+
 ## Demo interactions (post, likes, comment, follow)
 
 Uses addresses from `.env`. Creates **two posts**, **likes both** from the deployer, **one comment** on post 1, and **follows** `FOLLOWEE_ADDRESS` (default `0x000…0001`). Optionally set **`LIKER_PRIVATE_KEY`** for a second wallet to like post 1 again.

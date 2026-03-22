@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.28;
 
 /// @title Pulse7702Session — EIP-7702 implementation for session-key relayed calls
 /// @notice Deploy this contract and point users' EOAs here via EIP-7702 (type-4 tx).
-///         On Monad, keep ≥10 MON if the EOA stays 7702-delegated (reserve balance rules).
+///         On Monad, keep at least 10 MON if the EOA stays 7702-delegated (reserve balance rules).
 contract Pulse7702Session {
     struct Call {
         address to;
@@ -18,7 +18,7 @@ contract Pulse7702Session {
     event Executed(uint256 indexed kind, uint256 calls);
     event Relayed(address indexed relayer, uint256 relayNonceAfter);
 
-    /// @dev Only valid when `msg.sender == address(this)` (7702-delegated EOA calling itself).
+    /// @dev Only valid when msg.sender == address(this) (7702-delegated EOA calling itself).
     function setSessionSigner(address signer) external {
         require(msg.sender == address(this), "only self");
         sessionSigner = signer;
@@ -32,7 +32,7 @@ contract Pulse7702Session {
         emit Executed(0, calls.length);
     }
 
-    /// @dev Relay path: relayer pays gas; `sessionSigner` must have signed the payload (no wallet pop-up).
+    /// @dev Relay path: relayer pays gas; sessionSigner must have signed the payload.
     function executeRelayed(Call[] calldata calls, bytes calldata sig) external payable {
         require(sessionSigner != address(0), "session unset");
         bytes32 digest = _relayDigest(relayNonce, calls);
@@ -55,7 +55,7 @@ contract Pulse7702Session {
 
     function _executeCalls(Call[] calldata calls) internal {
         for (uint256 i = 0; i < calls.length; i++) {
-            (bool ok, ) = calls[i].to.call{value: calls[i].value}(calls[i].data);
+            (bool ok,) = calls[i].to.call{value: calls[i].value}(calls[i].data);
             require(ok, "subcall fail");
         }
     }

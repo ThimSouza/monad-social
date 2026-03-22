@@ -1,106 +1,37 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { getPostAuthorFromProfile } from '@/lib/profileStorage';
+import React, { createContext, useContext, useState, useCallback, useMemo, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useWallet } from '@/contexts/WalletContext';
+import { fetchIndexerPosts, mapIndexerRowToPost } from '@/lib/indexerPosts';
+import type { Post, PostAttachment } from '@/lib/feedModel';
+import { MAX_PHOTOS_PER_POST } from '@/lib/feedModel';
 
-/** In-memory attachment (data URL). For production, swap for CDN/IPFS URLs. */
-export interface PostAttachment {
-  id: string;
-  url: string;
-  kind: 'image';
-}
+export type { Post, PostAttachment };
+export { MAX_PHOTOS_PER_POST };
 
-export interface Post {
-  id: string;
-  author: string;
-  handle: string;
-  avatar: string;
-  content: string;
-  attachments?: PostAttachment[];
-  timestamp: Date;
-  likes: number;
-  reposts: number;
-  comments: number;
-  views: number;
-  liked: boolean;
-  reposted: boolean;
-  /** Pulses created via the composer (Profile “Pulses” tab). */
-  isMine?: boolean;
-}
+const INDEXER_POST_LIMIT = 200;
+const INDEXER_QUERY_KEY = ['indexerPosts'] as const;
 
 interface FeedContextType {
   posts: Post[];
-  addPost: (content: string, attachments?: PostAttachment[]) => void;
+  postsLoading: boolean;
+  postsError: string | null;
+  /** Refetch from Hasura / Envio indexer (e.g. after a successful on-chain tx). */
+  refetchPosts: () => Promise<unknown>;
+  /** Merge fields into a post by id (e.g. after like tx or client-only repost toggle). */
+  patchPost: (id: string, patch: Partial<Pick<Post, 'liked' | 'likes' | 'comments' | 'reposts' | 'reposted'>>) => void;
   toggleLike: (id: string) => void;
   toggleRepost: (id: string) => void;
 }
 
-const MOCK_POSTS: Post[] = [
-  {
-    id: '1',
-    author: 'Kenji Nakamura',
-    handle: '@kenji_monad',
-    avatar: 'KN',
-    content: 'Just deployed my first smart contract on Monad. 10,000 TPS is no joke — confirmation in under a second. The future of DeFi is parallel. ⚡',
-    timestamp: new Date(Date.now() - 120000),
-    likes: 847,
-    reposts: 203,
-    comments: 56,
-    views: 12400,
-    liked: false,
-    reposted: false,
-  },
-  {
-    id: '2',
-    author: 'Lena Petrova',
-    handle: '@lena_web3',
-    avatar: 'LP',
-    content: 'Parallel execution changes everything. Ran a stress test with 50 concurrent transactions — all confirmed in the same block. Ethereum could never 🔥',
-    timestamp: new Date(Date.now() - 300000),
-    likes: 1243,
-    reposts: 412,
-    comments: 89,
-    views: 28700,
-    liked: true,
-    reposted: false,
-  },
-  {
-    id: '3',
-    author: 'Marcus Chen',
-    handle: '@marcusc_dev',
-    avatar: 'MC',
-    content: 'Gas fees on Monad: 0.001 MON. Gas fees on Ethereum: my entire portfolio. Choose wisely. 💎',
-    timestamp: new Date(Date.now() - 600000),
-    likes: 2156,
-    reposts: 678,
-    comments: 134,
-    views: 45200,
-    liked: false,
-    reposted: true,
-  },
-  {
-    id: '4',
-    author: 'Aisha Rahman',
-    handle: '@aisha_builds',
-    avatar: 'AR',
-    content: 'Built a real-time social feed where every like is an on-chain transaction. On Monad it actually works without lag. This is what mass adoption looks like.',
-    timestamp: new Date(Date.now() - 900000),
-    likes: 567,
-    reposts: 145,
-    comments: 32,
-    views: 8900,
-    liked: false,
-    reposted: false,
-  },
-];
-
 const FeedContext = createContext<FeedContextType>({
   posts: [],
-  addPost: () => {},
+  postsLoading: true,
+  postsError: null,
+  refetchPosts: async () => {},
+  patchPost: () => {},
   toggleLike: () => {},
   toggleRepost: () => {},
 });
-
-/** Max still images per pulse (JPEG / PNG / WebP). */
-export const MAX_PHOTOS_PER_POST = 4;
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
@@ -189,57 +120,100 @@ export function readPhotoAttachment(file: File): Promise<PostAttachment> {
 export const useFeed = () => useContext(FeedContext);
 
 export const FeedProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [posts, setPosts] = useState<Post[]>(MOCK_POSTS);
+  const { address } = useWallet();
+  const queryClient = useQueryClient();
+  const [patches, setPatches] = useState<Record<string, Partial<Post>>>({});
 
-  const addPost = useCallback((content: string, attachments?: PostAttachment[]) => {
-    const trimmed = content.trim();
-    const list = attachments?.length
-      ? attachments.filter(a => a.kind === 'image').slice(0, MAX_PHOTOS_PER_POST)
-      : undefined;
-    if (!trimmed && !list?.length) return;
+  const {
+    data: rows = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: [...INDEXER_QUERY_KEY, address ?? ''],
+    queryFn: () => fetchIndexerPosts(INDEXER_POST_LIMIT, address),
+    refetchInterval: 20_000,
+    staleTime: 8_000,
+  });
 
-    const who = getPostAuthorFromProfile();
-    const newPost: Post = {
-      id: Date.now().toString(),
-      author: who.author,
-      handle: who.handle,
-      avatar: who.avatar,
-      content: trimmed,
-      attachments: list,
-      timestamp: new Date(),
-      likes: 0,
-      reposts: 0,
-      comments: 0,
-      views: 0,
-      liked: false,
-      reposted: false,
-      isMine: true,
-    };
-    setPosts(prev => [newPost, ...prev]);
+  const basePosts = useMemo(
+    () => rows.map(r => mapIndexerRowToPost(r, address)),
+    [rows, address]
+  );
+
+  const baseRef = useRef(basePosts);
+  baseRef.current = basePosts;
+
+  const posts = useMemo(
+    () => basePosts.map(p => ({ ...p, ...patches[p.id] })),
+    [basePosts, patches]
+  );
+
+  const postsError = isError
+    ? error instanceof Error
+      ? error.message
+      : String(error)
+    : null;
+
+  const patchPost = useCallback((id: string, patch: Partial<Pick<Post, 'liked' | 'likes' | 'comments' | 'reposts' | 'reposted'>>) => {
+    setPatches(prev => ({
+      ...prev,
+      [id]: { ...prev[id], ...patch },
+    }));
   }, []);
 
   const toggleLike = useCallback((id: string) => {
-    setPosts(prev =>
-      prev.map(p =>
-        p.id === id
-          ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 }
-          : p
-      )
-    );
+    setPatches(prev => {
+      const base = baseRef.current.find(p => p.id === id);
+      if (!base) return prev;
+      const cur = { ...base, ...prev[id] };
+      const liked = !cur.liked;
+      return {
+        ...prev,
+        [id]: {
+          ...prev[id],
+          liked,
+          likes: liked ? cur.likes + 1 : Math.max(0, cur.likes - 1),
+        },
+      };
+    });
   }, []);
 
   const toggleRepost = useCallback((id: string) => {
-    setPosts(prev =>
-      prev.map(p =>
-        p.id === id
-          ? { ...p, reposted: !p.reposted, reposts: p.reposted ? p.reposts - 1 : p.reposts + 1 }
-          : p
-      )
-    );
+    setPatches(prev => {
+      const base = baseRef.current.find(p => p.id === id);
+      if (!base) return prev;
+      const cur = { ...base, ...prev[id] };
+      const reposted = !cur.reposted;
+      return {
+        ...prev,
+        [id]: {
+          ...prev[id],
+          reposted,
+          reposts: reposted ? cur.reposts + 1 : Math.max(0, cur.reposts - 1),
+        },
+      };
+    });
   }, []);
 
+  const refetchPosts = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: [...INDEXER_QUERY_KEY] }),
+    [queryClient]
+  );
+
   return (
-    <FeedContext.Provider value={{ posts, addPost, toggleLike, toggleRepost }}>
+    <FeedContext.Provider
+      value={{
+        posts,
+        postsLoading: isLoading,
+        postsError,
+        refetchPosts,
+        patchPost,
+        toggleLike,
+        toggleRepost,
+      }}
+    >
       {children}
     </FeedContext.Provider>
   );

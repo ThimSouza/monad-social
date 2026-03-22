@@ -6,10 +6,18 @@ import path from "path";
 export default defineConfig({
   server: {
     host: true,
-    port: 8080,
+    port: 5173,
     strictPort: false,
     hmr: {
       overlay: true,
+    },
+    proxy: {
+      // Envio Hasura default port is 8080 — proxy avoids CORS when the app runs on 5173.
+      "/hasura": {
+        target: "http://127.0.0.1:8080",
+        changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/hasura/, ""),
+      },
     },
   },
   plugins: [react()],

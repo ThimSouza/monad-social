@@ -16,6 +16,10 @@ networks:
   - id: 10143
     # Bloco do primeiro deploy destes contratos (reduz trabalho vs start_block 0)
     start_block: ${ENVIO_START_BLOCK:-0}
+    # Opcional: bloco final (inclusive). `null` = sincroniza até ao head da chain.
+    # Para limitar carga em VM pequena, define ENVIO_END_BLOCK no .env (ex.: head atual do explorer).
+    # Docs: https://docs.envio.dev/docs/HyperIndex/config-schema-reference#def-network
+    end_block: ${ENVIO_END_BLOCK:-null}
     contracts:
       - name: Posts
         address:

@@ -14,6 +14,7 @@ frontend/.env
 # ── Indexer ──────────────────────────────────────────────────────────────────
 indexer/node_modules/
 indexer/.generated/
+indexer/generated/
 indexer/.env
 
 # ── OS / Editor ───────────────────────────────────────────────────────────────

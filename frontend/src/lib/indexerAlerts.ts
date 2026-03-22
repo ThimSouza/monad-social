@@ -1,4 +1,4 @@
-import { getIndexerGraphqlUrl } from '@/lib/indexerPosts';
+import { getIndexerGraphqlUrl, shouldSendHasuraAdminSecretFromClient } from '@/lib/indexerPosts';
 
 const LIKES_ON_MY_POSTS = `
   query AlertsLikes($me: String!) {
@@ -89,7 +89,9 @@ async function gqlFetch<T>(query: string, variables: Record<string, string>): Pr
   const url = getIndexerGraphqlUrl();
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   const secret = (import.meta.env.VITE_HASURA_ADMIN_SECRET as string | undefined)?.trim();
-  if (secret) headers['x-hasura-admin-secret'] = secret;
+  if (secret && shouldSendHasuraAdminSecretFromClient(url)) {
+    headers['x-hasura-admin-secret'] = secret;
+  }
 
   const res = await fetch(url, {
     method: 'POST',

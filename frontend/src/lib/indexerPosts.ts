@@ -37,12 +37,25 @@ export type IndexerPostsResponse = {
   errors?: { message: string }[];
 };
 
-/** GraphQL HTTP endpoint (Hasura). In Vite dev, default `/hasura/v1/graphql` is proxied to avoid CORS. */
+const VERCEL_HASURA_PROXY_PATH = '/api/hasura';
+
+/** GraphQL HTTP endpoint (Hasura). Dev: Vite proxy `/hasura`. Prod (Vercel): `/api/hasura` serverless → EC2. */
 export function getIndexerGraphqlUrl(): string {
   const env = (import.meta.env.VITE_HASURA_GRAPHQL_URL as string | undefined)?.trim();
   if (env) return env;
-  if (import.meta.env.DEV) return `${typeof window !== 'undefined' ? window.location.origin : ''}/hasura/v1/graphql`;
+  if (import.meta.env.DEV) {
+    return `${typeof window !== 'undefined' ? window.location.origin : ''}/hasura/v1/graphql`;
+  }
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}${VERCEL_HASURA_PROXY_PATH}`;
+  }
   return 'http://127.0.0.1:8080/v1/graphql';
+}
+
+/** Admin secret is added by Vercel `/api/hasura` — do not send from the browser. */
+export function shouldSendHasuraAdminSecretFromClient(url: string): boolean {
+  if (url.includes(VERCEL_HASURA_PROXY_PATH)) return false;
+  return true;
 }
 
 function shortAddr(a: string): string {
@@ -97,7 +110,7 @@ export async function fetchIndexerPosts(limit: number, viewerAddress: string | n
     'Content-Type': 'application/json',
   };
   const secret = (import.meta.env.VITE_HASURA_ADMIN_SECRET as string | undefined)?.trim();
-  if (secret) {
+  if (secret && shouldSendHasuraAdminSecretFromClient(url)) {
     headers['x-hasura-admin-secret'] = secret;
   }
 

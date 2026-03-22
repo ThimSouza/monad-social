@@ -1,0 +1,53 @@
+# Exemplos para colar no GraphiQL / Hasura (após `pnpm dev`).
+# Os nomes exatos dos campos podem variar ligeiramente com a versão da Envio — usa introspection se falhar.
+
+# Lista de posts (não apagados)
+query PostsRecentes {
+  Post(where: { deleted: { _eq: false } }, order_by: { createdAtBlock: desc }, limit: 20) {
+    id
+    contentURI
+    deleted
+    likeCount
+    commentCount
+    createdAtTimestamp
+    author_id
+  }
+}
+
+# Contas com atividade
+query Contas {
+  Account(limit: 50, order_by: { postCount: desc }) {
+    id
+    postCount
+    followerCount
+    followingCount
+  }
+}
+
+# Seguidores ativos
+query FollowsAtivos {
+  Follow(where: { active: { _eq: true } }, limit: 50) {
+    id
+    follower_id
+    following_id
+  }
+}
+
+# Likes ativos
+query LikesAtivos {
+  Like(where: { active: { _eq: true } }, limit: 50) {
+    id
+    user_id
+    post_id
+  }
+}
+
+# Comentários
+query Comentarios {
+  Comment(where: { deleted: { _eq: false } }, limit: 50) {
+    id
+    contentURI
+    post_id
+    author_id
+  }
+}

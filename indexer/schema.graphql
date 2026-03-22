@@ -1,0 +1,54 @@
+# Alinhado a contracts/src: Posts.sol, SocialGraph.sol, Interactions.sol
+
+type Account @entity {
+  id: ID!
+  postCount: BigInt!
+  followerCount: BigInt!
+  followingCount: BigInt!
+  posts: [Post!]! @derivedFrom(field: "author")
+  comments: [Comment!]! @derivedFrom(field: "author")
+  followingEdges: [Follow!]! @derivedFrom(field: "follower")
+  followerEdges: [Follow!]! @derivedFrom(field: "following")
+  likes: [Like!]! @derivedFrom(field: "user")
+}
+
+type Post @entity {
+  id: ID!
+  author: Account!
+  contentURI: String!
+  createdAtBlock: BigInt!
+  createdAtTimestamp: BigInt!
+  updatedAtTimestamp: BigInt!
+  deleted: Boolean!
+  likeCount: BigInt!
+  commentCount: BigInt!
+  likes: [Like!]! @derivedFrom(field: "post")
+  comments: [Comment!]! @derivedFrom(field: "post")
+}
+
+type Follow @entity {
+  id: ID!
+  follower: Account!
+  following: Account!
+  active: Boolean!
+  updatedAtBlock: BigInt!
+}
+
+type Like @entity {
+  id: ID!
+  user: Account!
+  post: Post!
+  active: Boolean!
+  updatedAtBlock: BigInt!
+}
+
+type Comment @entity {
+  id: ID!
+  post: Post!
+  author: Account!
+  contentURI: String!
+  createdAtBlock: BigInt!
+  createdAtTimestamp: BigInt!
+  deleted: Boolean!
+  updatedAtBlock: BigInt!
+}

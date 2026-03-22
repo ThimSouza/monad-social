@@ -1,0 +1,12 @@
+{
+  "name": "monad-social-indexer",
+  "private": true,
+  "scripts": {
+    "codegen": "envio codegen",
+    "dev": "envio dev"
+  },
+  "devDependencies": {
+    "envio": "^2.32.10",
+    "typescript": "^5.7.3"
+  }
+}

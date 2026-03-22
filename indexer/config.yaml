@@ -1,0 +1,44 @@
+# Envio HyperIndex — Monad Testnet (chain 10143)
+#
+# Endereços e bloco inicial vêm do deploy (forge script Deploy.s.sol).
+# 1. Copia indexer/.env.example para indexer/.env
+# 2. Preenche os valores (mesmos endereços que o script imprime no console)
+# 3. ENVIO_START_BLOCK = número do bloco em que correu o deploy (cast tx <tx_hash> | find block,
+#    ou vê no explorador; os 3 contratos no mesmo broadcast costumam ser o mesmo bloco)
+#
+# Interpolação: https://docs.envio.dev/docs/HyperIndex/configuration-file#environment-variables
+# Variáveis devem usar prefixo ENVIO_
+
+name: monad-social-indexer
+description: Indexação Posts + SocialGraph + Interactions (monad-social)
+
+networks:
+  - id: 10143
+    # Bloco do primeiro deploy destes contratos (reduz trabalho vs start_block 0)
+    start_block: ${ENVIO_START_BLOCK:-0}
+    contracts:
+      - name: Posts
+        address:
+          - ${ENVIO_POSTS_ADDRESS}
+        handler: ./src/EventHandlers.ts
+        events:
+          - event: PostCreated(uint256 indexed postId, address indexed author, string contentURI, uint64 createdAt)
+          - event: PostDeleted(uint256 indexed postId, address indexed author)
+
+      - name: SocialGraph
+        address:
+          - ${ENVIO_SOCIAL_GRAPH_ADDRESS}
+        handler: ./src/EventHandlers.ts
+        events:
+          - event: Followed(address indexed follower, address indexed followee)
+          - event: Unfollowed(address indexed follower, address indexed followee)
+
+      - name: Interactions
+        address:
+          - ${ENVIO_INTERACTIONS_ADDRESS}
+        handler: ./src/EventHandlers.ts
+        events:
+          - event: Liked(uint256 indexed postId, address indexed user)
+          - event: Unliked(uint256 indexed postId, address indexed user)
+          - event: CommentCreated(uint256 indexed commentId, uint256 indexed postId, address indexed author, string contentURI, uint64 createdAt)
+          - event: CommentDeleted(uint256 indexed commentId, address indexed author)

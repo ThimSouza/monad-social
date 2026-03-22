@@ -19,6 +19,7 @@ frontend/monad-pulse-live/
 # ── Indexer ──────────────────────────────────────────────────────────────────
 indexer/node_modules/
 indexer/.generated/
+indexer/generated/
 indexer/.env
 
 # ── OS / Editor ───────────────────────────────────────────────────────────────

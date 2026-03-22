@@ -14,6 +14,19 @@ importers:
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
+    optionalDependencies:
+      envio-darwin-arm64:
+        specifier: 2.32.10
+        version: 2.32.10
+      envio-darwin-x64:
+        specifier: 2.32.10
+        version: 2.32.10
+      envio-linux-arm64:
+        specifier: 2.32.10
+        version: 2.32.10
+      envio-linux-x64:
+        specifier: 2.32.10
+        version: 2.32.10
 
 packages:
 

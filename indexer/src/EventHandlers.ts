@@ -26,7 +26,7 @@ Posts.PostCreated.handler(async ({ event, context }) => {
 
   context.Post.set({
     id: postId,
-    author: author,
+    author_id: author,
     contentURI: event.params.contentURI,
     createdAtBlock: block,
     createdAtTimestamp: ts,
@@ -87,8 +87,8 @@ SocialGraph.Followed.handler(async ({ event, context }) => {
 
   context.Follow.set({
     id,
-    follower: follower,
-    following: followee,
+    follower_id: follower,
+    following_id: followee,
     active: true,
     updatedAtBlock: block,
   });
@@ -151,8 +151,8 @@ Interactions.Liked.handler(async ({ event, context }) => {
 
   context.Like.set({
     id,
-    user: user,
-    post: postId,
+    user_id: user,
+    post_id: postId,
     active: true,
     updatedAtBlock: block,
   });
@@ -211,8 +211,8 @@ Interactions.CommentCreated.handler(async ({ event, context }) => {
 
   context.Comment.set({
     id: commentId,
-    post: postId,
-    author: author,
+    post_id: postId,
+    author_id: author,
     contentURI: event.params.contentURI,
     createdAtBlock: block,
     createdAtTimestamp: ts,
@@ -233,10 +233,10 @@ Interactions.CommentDeleted.handler(async ({ event, context }) => {
   const comment = await context.Comment.get(commentId);
   if (!comment || comment.deleted) return;
 
-  const postId =
-    typeof comment.post === "string"
-      ? comment.post
-      : (comment as { post_id: string }).post_id;
+  const c = comment as { post_id?: string; post?: string };
+  const postId = c.post_id ?? c.post;
+  if (!postId) return;
+
   const post = await context.Post.get(postId);
   if (!post) return;
 

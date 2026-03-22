@@ -2,11 +2,20 @@
   "name": "monad-social-indexer",
   "private": true,
   "scripts": {
-    "codegen": "envio codegen",
+    "postinstall": "node scripts/ensure-generated-symlink.cjs",
+    "link-generated": "node scripts/ensure-generated-symlink.cjs",
+    "codegen": "envio codegen && node scripts/fix-generated-cjs-exports.cjs && node scripts/ensure-generated-symlink.cjs",
     "dev": "envio dev"
   },
+  "dependencies": {},
   "devDependencies": {
     "envio": "^2.32.10",
     "typescript": "^5.7.3"
+  },
+  "optionalDependencies": {
+    "envio-darwin-arm64": "2.32.10",
+    "envio-darwin-x64": "2.32.10",
+    "envio-linux-arm64": "2.32.10",
+    "envio-linux-x64": "2.32.10"
   }
 }

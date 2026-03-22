@@ -23,6 +23,18 @@ forge script script/Deploy.s.sol:Deploy \
 
 Copy the three deployed addresses from the output.
 
+## Demo interactions (post, likes, comment, follow)
+
+Uses addresses from `.env`. Creates **two posts**, **likes both** from the deployer, **one comment** on post 1, and **follows** `FOLLOWEE_ADDRESS` (default `0x000…0001`). Optionally set **`LIKER_PRIVATE_KEY`** for a second wallet to like post 1 again.
+
+```bash
+source .env
+forge script script/DemoInteractions.s.sol:DemoInteractions \
+  --rpc-url https://testnet-rpc.monad.xyz \
+  --broadcast \
+  -vvvv
+```
+
 ## Verify on MonadVision (Sourcify)
 
 Per [Monad docs — Foundry verification](https://docs.monad.xyz/guides/verify-smart-contract/foundry) and [BlockVision — verify on Monad explorer](https://docs.blockvision.org/reference/verify-smart-contract-on-monad-explorer):
@@ -68,6 +80,10 @@ If the CLI prints a warning but the explorer shows a green check, treat it as su
 ### Monadscan (Etherscan API)
 
 You can also verify with Etherscan-style API + API key (see Monad docs for `forge verify-contract --verifier etherscan`).
+
+## Indexer (Envio)
+
+See **`../indexer/README.md`**: configure `indexer/.env`, then `npm install`, `npm run codegen`, `npm run dev` (Docker required).
 
 ## Reproducible compiler settings
 
